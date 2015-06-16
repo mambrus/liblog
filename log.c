@@ -10,9 +10,11 @@
 #include <string.h>
 
 #define ENV_LOG_LEVEL "LOG_LEVEL"
-/*****************************************************************************/
-extern log_level log_filter_level;
-/*****************************************************************************/
+/*****************************************************************************
+  log_level binds when global variable initialization is run in .start, i.e.
+  _before_ CTOR which is initialized in initfini.c
+ *****************************************************************************/
+log_level log_filter_level = DEF_LOG_LEVEL;
 
 int log_getenv_loglevel(void)
 {
