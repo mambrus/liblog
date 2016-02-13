@@ -31,6 +31,8 @@
 # Debug files
 *.dSYM/
 
-# Cmake temp files
+# Cmake temp & generated files
 CMakeCache.txt
 CMakeFiles/
+cmake_install.cmake
+Makefile
