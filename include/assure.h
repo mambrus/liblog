@@ -1,9 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2006 by Michael Ambrus <ambrmi09@gmail.com>             *
- *   Copyright (C) 2015 by Michael Ambrus <ambrmi09@gmail.com>             *
- *                                                                         *
- *   This file originates from the TinKer project:                         *
- *   https://github.com/mambrus/tinker                                     *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,30 +15,33 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************
+ *   This file originates from the TinKer project ((C) 2006):              *
+ *   https://github.com/mambrus/tinker                                     *
  ***************************************************************************/
 
 /***************************************************************************
    Static inline functions. Need to be outside normal #ifndef file_h trap
  ***************************************************************************/
-#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 
 #include <log.h>
 #include "config.h"
-static inline void notify_failure(char *sassure, const char *sfun, char *sfile,
-                                  int iline)
+static inline void notify_failure(char *why, char *sassure, const char *sfun,
+                                  char *sfile, int iline)
 {
 #ifdef ENABLE_LOGGING
 #  ifdef LOG_INCLUDE_FILE_INFO
     if (sfun != NULL)
-        LOGE("%s failed in [%s]\n", sassure, sfun);
+        LOGE("%s %s failed in [%s]\n", why, sassure, sfun);
     else
-        LOGE("%s failed\n", sassure);
+        LOGE("%s %s failed\n", why, sassure);
 #  else
     if (sfun != NULL)
-        LOGE("%s failed in [%s] @ [%s:%d]\n", sassure, sfun, sfile, iline);
+        LOGE("%s %s failed in [%s] @ [%s:%d]\n", why, sassure, sfun, sfile, iline);
     else
-        LOGE("%s failed @ [%s:%d]\n", sassure, sfile, iline);
+        LOGE("%s %s failed @ [%s:%d]\n", why, sassure, sfile, iline);
 #  endif
 #else
     if (sfun != NULL)
@@ -54,22 +53,48 @@ static inline void notify_failure(char *sassure, const char *sfun, char *sfile,
 #endif
 }
 
-static inline void assertfail(char *assertstr,
-                              char *filestr, const char *sfun, int line)
+static inline void notify_andfail(char *why, char *sassure, const char *sfun,
+                                  char *sfile, int iline)
 {
-    notify_failure(assertstr, sfun, filestr, line);
+    notify_failure(why, sassure, sfun, sfile, iline);
 
 #ifndef NDEBUG
     /* Generate coredump */
     fprintf(stderr, "Calling abort() for coredump \n");
+    fflush(stderr);
     abort();
     fprintf(stderr, "Abort failed. Null-pointer assignement for coredump \n");
+    fflush(stderr);
     /* Should never return, but just in case lib is broken (Android?)
      * make a deliberate null pointer assignment */
     *((int *)NULL) = 1;
 #else
     fprintf(stderr, "Exit with failure\n");
-    exit(1);
+    fflush(stderr);
+#endif
+    /*  Fast-terminate process without signalling and unloading mmap data (i.e.
+        shared libraries) */
+    _exit(1);
+}
+
+static inline void assertfail(char *assertstr,
+                              char *filestr, const char *sfun, int line)
+{
+    notify_failure("ASSERT: ", assertstr, sfun, filestr, line);
+
+#ifndef NDEBUG
+    /* Generate coredump */
+    fprintf(stderr, "Calling abort() for coredump \n");
+    fflush(stderr);
+    abort();
+    fprintf(stderr, "Abort failed. Null-pointer assignment for coredump \n");
+    fflush(stderr);
+    /* Should never return, but just in case lib is broken (Android?)
+     * make a deliberate null pointer assignment */
+    *((int *)NULL) = 1;
+#else
+    fprintf(stderr, "Exit with failure\n");
+    fflush(stderr);
 #endif
 }
 
@@ -106,63 +131,61 @@ static inline void assertfail(char *assertstr,
  * ASSURE* / EXCEPTION* macros
  ***************************************************************************
  *
- * ASSURE      -Use as assert with the difference that it ignores NDEBUG.
- *              I.e. code inside '(' ')' will never be optimized away.
- * ASSURE_E    -Same as above, but has a dedicated exit ability instead of
- *              aborting (second argument). This can be call to (error)
+ * ASSURE     - Use as assert with the difference that it ignores NDEBUG.
+ *              I.e. code inside '(' ')' will never be optimized away AND
+ *              process will always fail on failure.
+ * ASSURE_E   - Same as above, but has a dedicated exit ability instead of
+ *              aborting (second argument). This can be call to error/exception
  *              handling function or semantics like "goto" and "return"
- * EXCEPTION   -Same as ASSURE, but with inverse logic. I.e. on "true" it
- *              will abort.
- *              I.e. code inside '(' ')' will never be optimized away.
- * EXCEPTION_E -Same as above, ASSURE_E but with same inverse logic as
- *              EXCEPTION.
+ * ASSERT     - Our version of the assert macro which considers NDEBUG, but if
+ *              set it does NOT remove the expanded code which is the only
+ *              conceptual difference. I.e. it will NOT terminate process on
+ *              failure when NDEBUG is set (as assert does), but it WILL
+ *              execute the code (and it will print-out the failure).
  *
  ***************************************************************************/
 #include <string.h>
 
 #define FLE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+
 #ifndef __GNUC__
-# define ASSURE(p) ((p) ? (void)0 : (void) notify_failure( \
-    #p, FNC, FLE, __LINE__ ) )
+# define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
+    "ASSURE :", #p, FNC, FLE, __LINE__ ) )
 # define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
-    #p, FNC, FLE, __LINE__ ); e;}
-# define EXCEPTION(p,e) if (p) {(void) notify_failure( \
-    #p, FNC, FLE, __LINE__ ); e;}
-# define EXCEPTION_E(p,e) if (p) {(void) notify_failure( \
-    #p, FNC, FLE, __LINE__ ); e;}
+   "ASSURE :", #p, FNC, FLE, __LINE__ ); e;}
 #else
-# define ASSURE(p) ((p) ? (void)0 : (void) notify_failure( \
-    #p, __FUNCTION__, FLE, __LINE__ ) )
+# define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
+    "ASSURE :", #p, __FUNCTION__, FLE, __LINE__ ) )
 # define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
-    #p, __FUNCTION__, FLE, __LINE__ ); e;}
-# define EXCEPTION(p,e) if (p) {(void) notify_failure( \
-    #p, __FUNCTION__, FLE, __LINE__ ); e;}
-# define EXCEPTION_E(p,e) if (p) {(void) notify_failure( \
-    #p, __FUNCTION__, FLE, __LINE__ ); e;}
+    "ASSURE :", #p, __FUNCTION__, FLE, __LINE__ ); e;}
 #endif
 
+#define ASSERT assert_ext
+
 /***************************************************************************
- * assrt_* macros
+ * assrt_* macros (old)
  ***************************************************************************
  *
- * assert_np  - This macro does exactly and what assert does, except that if
- *              NDEBUG is defined it will NOT remove arg. I.e. it is a safe
- *              macro to use instead of assert as replacement
- *
+ * assert_np  - This macro does exactly and what assert does (is assert).
+ *              It differs from assert in that if NDEBUG is defined it will NOT
+ *              remove arg. I.e. it is a safe macro to use instead of assert as
+ *              replacement.
  *              This is a good macro checking return values until design
  *              rigid enough when that isn't needed anymore, when handling
  *              any failure is ignored (by setting NDEBUG).
- *
+ * assert_ext - Same as assert_np, but handles NDEBUG differently. It's equal
+ *              in the aspect that it will always exit(1) on failure. The
+ *              difference is in the print-out format: while assert_np uses
+ *              assert, which may look differently on different targets whilst
+ *              assert_ext uses a custom macro which behaves the same
+ *              regardless of target and NDEBUG setting uses LOGx macros.
  * assert_ret - Returns from function with the result. Assumes the function
  *              returns error-codes. Think twice before using this.
  *
- * assert_ext - Same as assert, but handles NDEBUG differently. If NDEBUG is
- *              set, it mimics assert. If not, it exits with a failure.
- *              Either way it always terminates execution.
- *
  ***************************************************************************
-   Use of the assert_* macros is discouraged as they will be discontinued.
-   Use the for new ASSURE* / EXCEPTION* macros instead.
+   Use of the assert_* macros directly is discouraged as they may be
+   discontinued/changed.  Use the for new ASSURE* / ASSERT* macros above
+   instead.
  ***************************************************************************/
 
 #include <stdio.h>
@@ -175,7 +198,7 @@ static inline void assertfail(char *assertstr,
 #endif
 
 #define assert_ext(p) ((p) ? (void)0 : (void) assertfail( \
-        #p, __FILE__, FNC, __LINE__ ) )
+        #p, FLE , FNC, __LINE__ ) )
 
 /* Lazy error-handling. Careful using this. Assumes function invoked from
 accepts returning with code, and that the code means error */
