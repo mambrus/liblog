@@ -29,6 +29,10 @@
 #include <string.h>
 
 #define ENV_LOG_LEVEL "LOG_LEVEL"
+
+log_level log_ASSURE = LOG_LEVEL_WARNING;
+log_level log_ASSERT = LOG_LEVEL_ERROR;
+
 /*****************************************************************************
   log_level binds when global variable initialization is run in .start, i.e.
   _before_ CTOR which is initialized in initfini.c

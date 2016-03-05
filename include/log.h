@@ -34,9 +34,9 @@ typedef enum {
 } log_level;
 
 #ifdef ENABLE_SYSLOG
-#   define DEF_LOG_LEVEL LOG_LEVEL_WARNING
-#else
 #   define DEF_LOG_LEVEL LOG_LEVEL_INFO
+#else
+#   define DEF_LOG_LEVEL LOG_LEVEL_WARNING
 #endif
 
 void log_write(log_level level, const char *format, ...);

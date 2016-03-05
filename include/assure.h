@@ -29,20 +29,100 @@
 
 #include <log.h>
 #include "config.h"
-static inline void notify_failure(char *why, char *sassure, const char *sfun,
-                                  char *sfile, int iline)
+
+extern log_level log_ASSURE;
+extern log_level log_ASSERT;
+
+static inline log_level get_loglevel_assert(void)
+{
+    return log_ASSERT;
+}
+
+static inline log_level get_loglevel_assure(void)
+{
+    return log_ASSURE;
+}
+
+static inline void set_loglevel_assert(log_level newlevel)
+{
+    log_ASSERT = newlevel;
+}
+
+static inline void set_loglevel_assure(log_level newlevel)
+{
+    log_ASSURE = newlevel;
+}
+
+#ifdef ENABLE_LOGGING
+
+#define LOGX( WHY, ...)  {              \
+    log_level log_tmp;                  \
+    switch (WHY) {                      \
+        case _ASSERT:                   \
+            log_tmp = log_ASSERT;       \
+            break;                      \
+        case _ASSURE:                   \
+            log_tmp = log_ASSURE;       \
+            break;                      \
+        default:                        \
+            log_tmp = log_ASSURE;       \
+    }                                   \
+                                        \
+    switch (log_tmp) {                  \
+        case LOG_LEVEL_VERBOSE:         \
+            LOGV(__VA_ARGS__);          \
+            break;                      \
+        case LOG_LEVEL_DEBUG:           \
+            LOGD(__VA_ARGS__);          \
+            break;                      \
+        case LOG_LEVEL_INFO:            \
+            LOGI(__VA_ARGS__);          \
+            break;                      \
+        case LOG_LEVEL_WARNING:         \
+            LOGW(__VA_ARGS__);          \
+            break;                      \
+        case LOG_LEVEL_ERROR:           \
+            LOGE(__VA_ARGS__);          \
+            break;                      \
+        default:                        \
+            LOGE(__VA_ARGS__);          \
+            break;                      \
+    }                                   \
+}
+
+#endif
+typedef enum { _ASSERT, _ASSURE } assrt_t;
+
+static inline void notify_failure(assrt_t etype, char *sassure,
+                                  const char *sfun, char *sfile, int iline)
 {
 #ifdef ENABLE_LOGGING
+    char *why;
+
+    switch (etype) {
+        case _ASSERT:
+            why = "ASSERT: ";
+            break;
+        case _ASSURE:
+            why = "ASSURE: ";
+            break;
+        default:
+            why = "UNKNOWN: ";
+    };
+
 #  ifdef LOG_INCLUDE_FILE_INFO
-    if (sfun != NULL)
-        LOGE("%s %s failed in [%s]\n", why, sassure, sfun);
-    else
-        LOGE("%s %s failed\n", why, sassure);
+    if (sfun != NULL) {
+        LOGX(etype, "%s %s failed in [%s]\n", why, sassure, sfun);
+    } else {
+        LOGX(etype, "%s %s failed\n", why, sassure);
+    }
 #  else
-    if (sfun != NULL)
-        LOGE("%s %s failed in [%s] @ [%s:%d]\n", why, sassure, sfun, sfile, iline);
-    else
-        LOGE("%s %s failed @ [%s:%d]\n", why, sassure, sfile, iline);
+    if (sfun != NULL) {
+        LOGX(etype, "%s %s failed in [%s] @ [%s:%d]\n", why, sassure, sfun,
+             sfile, iline);
+    } else {
+        LOGX(etype, "%s %s failed @ [%s:%d]\n", why, sassure, sfile, iline);
+    }
 #  endif
 #else
     if (sfun != NULL)
@@ -54,10 +134,10 @@ static inline void notify_failure(char *why, char *sassure, const char *sfun,
 #endif
 }
 
-static inline void notify_andfail(char *why, char *sassure, const char *sfun,
-                                  char *sfile, int iline)
+static inline void notify_andfail(assrt_t etype, char *sassure,
+                                  const char *sfun, char *sfile, int iline)
 {
-    notify_failure(why, sassure, sfun, sfile, iline);
+    notify_failure(etype, sassure, sfun, sfile, iline);
 
 #ifndef NDEBUG
     /* Generate coredump */
@@ -74,14 +154,14 @@ static inline void notify_andfail(char *why, char *sassure, const char *sfun,
     fflush(stderr);
 #endif
     /*  Fast-terminate process without signalling and unloading mmap data (i.e.
-        shared libraries) */
+       shared libraries) */
     _exit(1);
 }
 
 static inline void assertfail(char *assertstr,
                               char *filestr, const char *sfun, int line)
 {
-    notify_failure("ASSERT: ", assertstr, sfun, filestr, line);
+    notify_failure(_ASSERT, assertstr, sfun, filestr, line);
 
 #ifndef NDEBUG
     /* Generate coredump */
@@ -151,14 +231,14 @@ static inline void assertfail(char *assertstr,
 
 #ifndef __GNUC__
 # define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
-    "ASSURE :", #p, FNC, FLE, __LINE__ ) )
+    _ASSURE, #p, FNC, FLE, __LINE__ ) )
 # define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
-   "ASSURE :", #p, FNC, FLE, __LINE__ ); e;}
+   _ASSURE, #p, FNC, FLE, __LINE__ ); e;}
 #else
 # define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
-    "ASSURE :", #p, __FUNCTION__, FLE, __LINE__ ) )
+    _ASSURE, #p, __FUNCTION__, FLE, __LINE__ ) )
 # define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
-    "ASSURE :", #p, __FUNCTION__, FLE, __LINE__ ); e;}
+    _ASSURE, #p, __FUNCTION__, FLE, __LINE__ ); e;}
 #endif
 
 #define ASSERT assert_ext
