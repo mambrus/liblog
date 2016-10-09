@@ -44,6 +44,7 @@ void log_set_verbosity(log_level level);
 log_level str2loglevel(const char *str, int *ok);
 int log_getenv_loglevel(void);
 void log_test(void);
+void log_syslog_config(int incl_stderr);
 
 /* Bladerf compatible macros (too much to type though) */
 #define log_verbose(...)	log_write(LOG_LEVEL_VERBOSE, "[V] "__VA_ARGS__)

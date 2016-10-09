@@ -30,8 +30,11 @@
 
 #define ENV_LOG_LEVEL "LOG_LEVEL"
 
+/* Global variables that affect assure */
 log_level log_ASSURE = LOG_LEVEL_WARNING;
 log_level log_ASSERT = LOG_LEVEL_ERROR;
+
+static int syslog_open = 0;
 
 /*****************************************************************************
   log_level binds when global variable initialization is run in .start, i.e.
@@ -138,6 +141,27 @@ void log_set_verbosity(log_level level)
 {
     log_filter_level = level;
 }
+
+#if defined (ENABLE_SYSLOG)
+void log_syslog_config(int incl_stderr)
+{
+    if (syslog_open) {
+        closelog();
+        syslog_open = 0;
+    }
+
+    if (incl_stderr) {
+
+        openlog(PROJ_NAME,
+                LOG_CONS | LOG_NDELAY | LOG_NOWAIT | LOG_PERROR | LOG_PID,
+                LOG_USER);
+    } else {
+        openlog(PROJ_NAME,
+                LOG_CONS | LOG_NDELAY | LOG_NOWAIT | LOG_PID, LOG_USER);
+    }
+    syslog_open = 1;
+}
+#endif
 
 /* Test what log-level is effectuated and where it ends up */
 void log_test()

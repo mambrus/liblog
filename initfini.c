@@ -47,9 +47,8 @@ void __init __liblog_init(void)
     log_filter_level = DEF_LOG_LEVEL;   /* Global variable initializer, if missed */
     log_level = log_getenv_loglevel();
 
-    openlog(PROJ_NAME,
-            LOG_CONS | LOG_NDELAY | LOG_NOWAIT | LOG_PERROR | LOG_PID,
-            LOG_USER);
+    /* Open syslog, include stderr in output */
+    log_syslog_config(1);
 
     log_set_verbosity(log_level);
     log_debug("%s %s: initializing\n", PROJ_NAME, VERSION);
