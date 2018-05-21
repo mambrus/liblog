@@ -1,3 +1,6 @@
+cmake_minimum_required (VERSION 2.6)
+project (liblog C)
+
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}")
 
@@ -16,6 +19,11 @@ endif (ENABLE_SYSLOG)
 
 set(LOGGING_SOURCE
 	${LOGGING_SOURCE}
+)
+
+configure_file (
+	"${PROJECT_SOURCE_DIR}/config.h.in"
+	"${PROJECT_BINARY_DIR}/config.h"
 )
 
 add_library(liblog ${LOGGING_SOURCE})

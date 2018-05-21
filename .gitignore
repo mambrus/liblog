@@ -1,4 +1,8 @@
 # Object files
+tags
+c-tags
+*.swp
+*.*~
 *.o
 *.ko
 *.obj
@@ -36,3 +40,4 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+*config.h

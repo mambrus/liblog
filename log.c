@@ -17,7 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include <config.h>
+#include "config.h"
 #include <strings.h>
 #include <log.h>
 #if !defined(WIN32) && !defined(__CYGWIN__) && defined(ENABLE_SYSLOG)
@@ -34,7 +34,9 @@
 log_level log_ASSURE = LOG_LEVEL_WARNING;
 log_level log_ASSERT = LOG_LEVEL_ERROR;
 
+#if defined (ENABLE_SYSLOG)
 static int syslog_open = 0;
+#endif
 
 /*****************************************************************************
   log_level binds when global variable initialization is run in .start, i.e.
