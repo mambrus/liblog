@@ -19,14 +19,14 @@
  ***************************************************************************/
 #include "config.h"
 #include <strings.h>
-#include <log.h>
-#if !defined(WIN32) && !defined(__CYGWIN__) && defined(ENABLE_SYSLOG)
+#if !defined(WIN32) && !defined(__CYGWIN__) && defined(LIBLOG_ENABLE_SYSLOG)
 #include <syslog.h>
 #endif
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <liblog/log.h>
 
 #define ENV_LOG_LEVEL "LOG_LEVEL"
 
@@ -34,7 +34,7 @@
 log_level log_ASSURE = LOG_LEVEL_WARNING;
 log_level log_ASSERT = LOG_LEVEL_ERROR;
 
-#if defined (ENABLE_SYSLOG)
+#if defined (LIBLOG_ENABLE_SYSLOG)
 static int syslog_open = 0;
 #endif
 
@@ -97,7 +97,7 @@ void log_write(log_level level, const char *format, ...)
 #if defined(WIN32) || defined(__CYGWIN__)
         vfprintf(stderr, format, args);
 #else
-#  if defined (ENABLE_SYSLOG)
+#  if defined (LIBLOG_ENABLE_SYSLOG)
         {
             int syslog_level;
 
@@ -144,7 +144,7 @@ void log_set_verbosity(log_level level)
     log_filter_level = level;
 }
 
-#if defined (ENABLE_SYSLOG)
+#if defined (LIBLOG_ENABLE_SYSLOG)
 void log_syslog_config(int incl_stderr)
 {
     if (syslog_open) {

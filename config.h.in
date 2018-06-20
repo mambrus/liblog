@@ -1,1 +1,14 @@
-#cmakedefine ENABLE_LOGGING
+/* LIBLOG config file */
+
+#ifndef liblog_config_h
+#define liblog_config_h
+
+#define PROJ_NAME "@CMAKE_PROJECT_NAME@"
+#define VERSION_MAJOR @LIBLOG_VERSION_MAJOR@
+#define VERSION_MINOR @LIBLOG_VERSION_MINOR@
+#define VERSION_PATCH @LIBLOG_VERSION_PATCH@
+#define VERSION "@LIBLOG_VERSION_MAJOR@.@LIBLOG_VERSION_MINOR@.@LIBLOG_VERSION_PATCH@"
+
+#cmakedefine LIBLOG_ENABLE_SYSLOG
+
+#endif

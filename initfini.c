@@ -21,11 +21,19 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include <config.h>
 #include <syslog.h>
-#include "log.h"
+#include <liblog/log.h>
+#include "config.h"
 #define __init __attribute__((constructor))
 #define __fini __attribute__((destructor))
+
+#ifndef PROJ_NAME
+#define PROJ_NAME LIBLOG_PROJ_NAME
+#endif
+
+#ifndef VERSION
+#define VERSION LIBLOG_VERSION
+#endif
 
 /* Module initializers/deinitializers. When used as library (who don't have
  * a natural entry/exit function) these are used to initialize

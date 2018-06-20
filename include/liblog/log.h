@@ -33,7 +33,7 @@ typedef enum {
     LOG_LEVEL_SILENT            /* No output */
 } log_level;
 
-#ifdef ENABLE_SYSLOG
+#ifdef LIBLOG_ENABLE_SYSLOG
 #   define DEF_LOG_LEVEL LOG_LEVEL_INFO
 #else
 #   define DEF_LOG_LEVEL LOG_LEVEL_WARNING
