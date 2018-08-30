@@ -66,6 +66,14 @@ log_level str2loglevel(const char *str, int *ok)
     log_level level = LOG_LEVEL_ERROR;
     int valid = 1;
 
+    if ((strnlen(str, NAME_MAX) == 1)
+        && (((str[0] - '0') <= LOG_LEVEL_CRITICAL)
+            && ((str[0] - '0') >= LOG_LEVEL_VERBOSE))) {
+
+        level = atoi(str);
+        goto done;
+    }
+
     if (!strcasecmp(str, "critical")) {
         level = LOG_LEVEL_CRITICAL;
     } else if (!strcasecmp(str, "error")) {
@@ -82,6 +90,7 @@ log_level str2loglevel(const char *str, int *ok)
         valid = 0;
     }
 
+done:
     *ok = valid;
     return level;
 }
