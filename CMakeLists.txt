@@ -1,10 +1,13 @@
 cmake_minimum_required (VERSION 2.6)
+
 project (liblog C)
 
 set (LIBLOG_VERSION_MAJOR 0)
 set (LIBLOG_VERSION_MINOR 3)
 set (LIBLOG_VERSION_PATCH 0)
 
+include_directories("${PROJECT_BINARY_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
@@ -15,6 +18,9 @@ set(LOGGING_SOURCE
 option (LIBLOG_ENABLE_SYSLOG "Log to syslog" OFF)
 
 if (LIBLOG_ENABLE_SYSLOG)
+	option(ENABLE_SYSLOG_STDERR
+		"Send logs also to stderr" ON)
+
 	set(LOGGING_SOURCE
 		${LOGGING_SOURCE}
 		initfini.c

@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <liblog/log.h>
 
 #define ENV_LOG_LEVEL "LOG_LEVEL"
@@ -33,6 +34,9 @@
 /* Global variables that affect assure */
 log_level log_ASSURE = LOG_LEVEL_WARNING;
 log_level log_ASSERT = LOG_LEVEL_ERROR;
+
+/* Local variables */
+static char proc_name[NAME_MAX] = LOG_AS_PROCESS_NAME_DFLT;
 
 #if defined (LIBLOG_ENABLE_SYSLOG)
 static int syslog_open = 0;
@@ -93,6 +97,14 @@ log_level str2loglevel(const char *str, int *ok)
 done:
     *ok = valid;
     return level;
+}
+
+void log_as_pname(const char *name)
+{
+    strncpy(proc_name, name, NAME_MAX);
+#if defined (ENABLE_SYSLOG)
+    log_syslog_config(ENABLE_SYSLOG_STDERR);
+#endif
 }
 
 void log_write(log_level level, const char *format, ...)
@@ -163,11 +175,11 @@ void log_syslog_config(int incl_stderr)
 
     if (incl_stderr) {
 
-        openlog(PROJ_NAME,
+        openlog(proc_name,
                 LOG_CONS | LOG_NDELAY | LOG_NOWAIT | LOG_PERROR | LOG_PID,
                 LOG_USER);
     } else {
-        openlog(PROJ_NAME,
+        openlog(proc_name,
                 LOG_CONS | LOG_NDELAY | LOG_NOWAIT | LOG_PID, LOG_USER);
     }
     syslog_open = 1;

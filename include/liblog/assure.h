@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <log.h>
+#include <liblog/log.h>
 #include "config.h"
 
 extern log_level log_ASSURE;
