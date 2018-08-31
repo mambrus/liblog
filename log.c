@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <liblog/log.h>
 
@@ -109,7 +110,14 @@ done:
 
 void log_set_process_name(const char *name)
 {
-    strncpy(proc_name, name, NAME_MAX);
+    char *sptr;
+
+    sptr = strrchr(name, '/');
+    if (sptr)
+        strncpy(proc_name, sptr + 1, NAME_MAX);
+    else
+        strncpy(proc_name, name, NAME_MAX);
+
 #if LIBLOG_ENABLE_SYSLOG
     log_syslog_config(ENABLE_SYSLOG_STDERR);
 #endif
@@ -127,14 +135,15 @@ void log_write(log_level level, const char *format, ...)
         {
             char tstr[LOG_LINE_MAX_CHARS];
             char buffer[LOG_LINE_MAX_CHARS];
-            struct tm *time_info;
-            time_t rawtime;
-            time(&rawtime);
+            struct tm tm;
+            struct timeval now;
 
-            time_info = localtime(&rawtime);
-            strftime(tstr, LOG_LINE_MAX_CHARS, "%y%m%d-%H%M%S", time_info);
-            snprintf(buffer, LOG_LINE_MAX_CHARS, "%s %s[%d]: %s", tstr,
-                     proc_name, getpid(), format);
+            gettimeofday(&now, NULL);
+
+            strftime(tstr, LOG_LINE_MAX_CHARS, "%y%m%d-%H%M%S",
+                     localtime_r(&(now.tv_usec), &tm));
+            snprintf(buffer, LOG_LINE_MAX_CHARS, "%s.%06lu %s[%d]: %s", tstr,
+                     now.tv_usec, proc_name, getpid(), format);
 
             vfprintf(stderr, buffer, args);
         }
