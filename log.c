@@ -19,7 +19,7 @@
  ***************************************************************************/
 #include "config.h"
 #include <strings.h>
-#if !defined(WIN32) && !defined(__CYGWIN__) && defined(LIBLOG_ENABLE_SYSLOG)
+#if !defined(WIN32) && !defined(__CYGWIN__) && LIBLOG_ENABLE_SYSLOG
 #include <syslog.h>
 #endif
 #include <stdio.h>
@@ -27,9 +27,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 #include <liblog/log.h>
 
-#define ENV_LOG_LEVEL "LOG_LEVEL"
+#if defined(WIN32) || defined(__CYGWIN__)
+#define SYSTEM_SYSLOG_INABLE
+#endif
+
+#define ENV_LOG_LEVEL           "LOG_LEVEL"
+#define LOG_LINE_MAX_CHARS      2048
 
 /* Global variables that affect assure */
 log_level log_ASSURE = LOG_LEVEL_WARNING;
@@ -38,7 +46,7 @@ log_level log_ASSERT = LOG_LEVEL_ERROR;
 /* Local variables */
 static char proc_name[NAME_MAX] = LOG_AS_PROCESS_NAME_DFLT;
 
-#if defined (LIBLOG_ENABLE_SYSLOG)
+#if LIBLOG_ENABLE_SYSLOG
 static int syslog_open = 0;
 #endif
 
@@ -99,10 +107,10 @@ done:
     return level;
 }
 
-void log_as_pname(const char *name)
+void log_set_process_name(const char *name)
 {
     strncpy(proc_name, name, NAME_MAX);
-#if defined (ENABLE_SYSLOG)
+#if LIBLOG_ENABLE_SYSLOG
     log_syslog_config(ENABLE_SYSLOG_STDERR);
 #endif
 }
@@ -115,10 +123,22 @@ void log_write(log_level level, const char *format, ...)
 
         /* Write the log message */
         va_start(args, format);
-#if defined(WIN32) || defined(__CYGWIN__)
-        vfprintf(stderr, format, args);
+#if defined(SYSTEM_SYSLOG_INABLE) || ! LIBLOG_ENABLE_SYSLOG
+        {
+            char tstr[LOG_LINE_MAX_CHARS];
+            char buffer[LOG_LINE_MAX_CHARS];
+            struct tm *time_info;
+            time_t rawtime;
+            time(&rawtime);
+
+            time_info = localtime(&rawtime);
+            strftime(tstr, LOG_LINE_MAX_CHARS, "%y%m%d-%H%M%S", time_info);
+            snprintf(buffer, LOG_LINE_MAX_CHARS, "%s %s[%d]: %s", tstr,
+                     proc_name, getpid(), format);
+
+            vfprintf(stderr, buffer, args);
+        }
 #else
-#  if defined (LIBLOG_ENABLE_SYSLOG)
         {
             int syslog_level;
 
@@ -152,9 +172,6 @@ void log_write(log_level level, const char *format, ...)
 
             vsyslog(syslog_level | LOG_USER, format, args);
         }
-#  else
-        vfprintf(stderr, format, args);
-#  endif
 #endif
         va_end(args);
     }
@@ -165,7 +182,7 @@ void log_set_verbosity(log_level level)
     log_filter_level = level;
 }
 
-#if defined (LIBLOG_ENABLE_SYSLOG)
+#if LIBLOG_ENABLE_SYSLOG
 void log_syslog_config(int incl_stderr)
 {
     if (syslog_open) {

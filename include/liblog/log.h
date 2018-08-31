@@ -33,7 +33,7 @@ typedef enum {
     LOG_LEVEL_SILENT            /* No output */
 } log_level;
 
-#ifdef LIBLOG_ENABLE_SYSLOG
+#if LIBLOG_ENABLE_SYSLOG
 #   define DEF_LOG_LEVEL LOG_LEVEL_INFO
 #else
 #   define DEF_LOG_LEVEL LOG_LEVEL_WARNING
@@ -45,6 +45,7 @@ log_level str2loglevel(const char *str, int *ok);
 int log_getenv_loglevel(void);
 void log_test(void);
 void log_syslog_config(int incl_stderr);
+void log_set_process_name(const char *name);
 
 /* Bladerf compatible macros (too much to type though) */
 #define log_verbose(...)	log_write(LOG_LEVEL_VERBOSE, "[V] "__VA_ARGS__)

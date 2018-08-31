@@ -13,6 +13,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(LOGGING_SOURCE
 	log.c
+	initfini.c
 )
 
 option (LIBLOG_ENABLE_SYSLOG "Log to syslog" OFF)

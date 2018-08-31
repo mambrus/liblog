@@ -63,10 +63,15 @@ void __init __liblog_init(void)
     log_level = log_getenv_loglevel();
 
     /* Open syslog, include stderr in output */
-    log_syslog_config(1);
+#if LIBLOG_ENABLE_SYSLOG
+    log_syslog_config(ENABLE_SYSLOG_STDERR);
+#endif
 
     log_set_verbosity(log_level);
-    log_debug("%s [%s]: initializing for: %s\n", PROJ_NAME, VERSION, LOG_AS_PROCESS_NAME_DFLT);
+#if ENABLE_INITFINI_SHOWEXEC
+    log_debug("%s [%s]: initializing for: %s\n", PROJ_NAME, VERSION,
+              LOG_AS_PROCESS_NAME_DFLT);
+#endif
 }
 
 void __fini __liblog_fini(void)
@@ -74,7 +79,10 @@ void __fini __liblog_fini(void)
     int log_level = log_getenv_loglevel();
 
     log_set_verbosity(log_level);
-    log_debug("% [%s]: de-initializing for: %s\n", PROJ_NAME, VERSION, LOG_AS_PROCESS_NAME_DFLT);
+#if ENABLE_INITFINI_SHOWEXEC
+    log_debug("% [%s]: de-initializing for: %s\n", PROJ_NAME, VERSION,
+              LOG_AS_PROCESS_NAME_DFLT);
     fflush(NULL);
+#endif
     closelog();
 }
