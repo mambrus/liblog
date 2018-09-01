@@ -17,9 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "config.h"
 #include <strings.h>
-#if !defined(WIN32) && !defined(__CYGWIN__) && LIBLOG_ENABLE_SYSLOG
+#if !defined(WIN32) && !defined(__CYGWIN__) && defined(LIBLOG_ENABLE_SYSLOG)
 #include <syslog.h>
 #endif
 #include <stdio.h>
@@ -32,6 +31,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <liblog/log.h>
+#include "config.h"
+#include "local.h"
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define SYSTEM_SYSLOG_INABLE
@@ -47,7 +48,7 @@ log_level log_ASSERT = LOG_LEVEL_ERROR;
 /* Local variables */
 static char proc_name[NAME_MAX] = LOG_AS_PROCESS_NAME_DFLT;
 
-#if LIBLOG_ENABLE_SYSLOG
+#ifdef LIBLOG_ENABLE_SYSLOG
 static int syslog_open = 0;
 #endif
 
@@ -118,7 +119,7 @@ void log_set_process_name(const char *name)
     else
         strncpy(proc_name, name, NAME_MAX);
 
-#if LIBLOG_ENABLE_SYSLOG
+#ifdef LIBLOG_ENABLE_SYSLOG
     log_syslog_config(ENABLE_SYSLOG_STDERR);
 #endif
 }
@@ -131,7 +132,7 @@ void log_write(log_level level, const char *format, ...)
 
         /* Write the log message */
         va_start(args, format);
-#if defined(SYSTEM_SYSLOG_INABLE) || ! LIBLOG_ENABLE_SYSLOG
+#if defined(SYSTEM_SYSLOG_INABLE) || ! defined(LIBLOG_ENABLE_SYSLOG)
         {
             char tstr[LOG_LINE_MAX_CHARS];
             char buffer[LOG_LINE_MAX_CHARS];
@@ -191,7 +192,7 @@ void log_set_verbosity(log_level level)
     log_filter_level = level;
 }
 
-#if LIBLOG_ENABLE_SYSLOG
+#ifdef LIBLOG_ENABLE_SYSLOG
 void log_syslog_config(int incl_stderr)
 {
     if (syslog_open) {

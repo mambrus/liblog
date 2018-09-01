@@ -24,6 +24,7 @@
 #include <syslog.h>
 #include <liblog/log.h>
 #include "config.h"
+#include "local.h"
 #define __init __attribute__((constructor))
 #define __fini __attribute__((destructor))
 
@@ -63,12 +64,12 @@ void __init __liblog_init(void)
     log_level = log_getenv_loglevel();
 
     /* Open syslog, include stderr in output */
-#if LIBLOG_ENABLE_SYSLOG
+#ifdef LIBLOG_ENABLE_SYSLOG
     log_syslog_config(ENABLE_SYSLOG_STDERR);
 #endif
 
     log_set_verbosity(log_level);
-#if ENABLE_INITFINI_SHOWEXEC
+#ifdef ENABLE_INITFINI_SHOWEXEC
     log_debug("%s [%s]: initializing for: %s\n", PROJ_NAME, VERSION,
               LOG_AS_PROCESS_NAME_DFLT);
 #endif
@@ -79,7 +80,7 @@ void __fini __liblog_fini(void)
     int log_level = log_getenv_loglevel();
 
     log_set_verbosity(log_level);
-#if ENABLE_INITFINI_SHOWEXEC
+#ifdef ENABLE_INITFINI_SHOWEXEC
     log_debug("% [%s]: de-initializing for: %s\n", PROJ_NAME, VERSION,
               LOG_AS_PROCESS_NAME_DFLT);
     fflush(NULL);

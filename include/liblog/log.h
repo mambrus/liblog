@@ -33,12 +33,6 @@ typedef enum {
     LOG_LEVEL_SILENT            /* No output */
 } log_level;
 
-#if LIBLOG_ENABLE_SYSLOG
-#   define DEF_LOG_LEVEL LOG_LEVEL_INFO
-#else
-#   define DEF_LOG_LEVEL LOG_LEVEL_WARNING
-#endif
-
 void log_write(log_level level, const char *format, ...);
 void log_set_verbosity(log_level level);
 log_level str2loglevel(const char *str, int *ok);
