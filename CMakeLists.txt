@@ -16,23 +16,17 @@ set(LOGGING_SOURCE
 	initfini.c
 )
 
+# Prevent initfini functions from being opt out
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
+
 option (LIBLOG_ENABLE_SYSLOG "Log to syslog" OFF)
 
 if (LIBLOG_ENABLE_SYSLOG)
 	option(ENABLE_SYSLOG_STDERR
 		"Send logs also to stderr" ON)
 
-	set(LOGGING_SOURCE
-		${LOGGING_SOURCE}
-		initfini.c
-	)
-	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
 endif (LIBLOG_ENABLE_SYSLOG)
-
-set(LOGGING_SOURCE
-	${LOGGING_SOURCE}
-)
 
 configure_file (
 	"${PROJECT_SOURCE_DIR}/config.h.in"
