@@ -141,7 +141,7 @@ void log_write(log_level level, const char *format, ...)
             gettimeofday(&now, NULL);
 
             strftime(tstr, LOG_LINE_MAX_CHARS, "%y%m%d-%H%M%S",
-                     localtime_r(&(now.tv_usec), &tm));
+                     localtime_r(&(now.tv_sec), &tm));
             snprintf(buffer, LOG_LINE_MAX_CHARS, "%s.%06lu %s[%d]: %s", tstr,
                      now.tv_usec, proc_name, getpid(), format);
 
