@@ -21,8 +21,8 @@ set(LOGGING_SOURCE
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
 
+option (ENABLE_INITFINI_SHOWEXEC "Show init/fini execution" OFF)
 option (LIBLOG_ENABLE_SYSLOG "Log to syslog" OFF)
-option (LIBLOG_ASSURE_LOGGED "Error functions uses liblog for pritouts" ON)
 option (LIBLOG_ASSURE_LOGGED "Error functions uses liblog for pritouts" ON)
 option (LIBLOG_ASSURE_INCL_FILEINFO "File-name/line-number appended" OFF)
 

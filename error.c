@@ -112,4 +112,6 @@ void liblog_print_failure(assrt_t etype, char *sassure,
         fprintf(stderr, "ERROR: %s failed @ [%s:%d]\n", sassure, sfile, iline);
     fflush(stderr);
 #endif
+
+	 fflush(NULL);
 }
