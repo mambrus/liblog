@@ -74,7 +74,7 @@
 }
 
 void liblog_print_failure(assrt_t etype, char *sassure,
-                           const char *sfun, char *sfile, int iline)
+                          const char *sfun, char *sfile, int iline)
 {
 #ifdef LIBLOG_ASSURE_LOGGED
     char *why;
@@ -113,5 +113,5 @@ void liblog_print_failure(assrt_t etype, char *sassure,
     fflush(stderr);
 #endif
 
-	 fflush(NULL);
+    fflush(NULL);
 }
