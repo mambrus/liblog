@@ -18,9 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include <strings.h>
-#if !defined(WIN32) && !defined(__CYGWIN__) && defined(LIBLOG_ENABLE_SYSLOG)
-#include <syslog.h>
-#endif
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -33,6 +30,9 @@
 #include <liblog/log.h>
 #include "config.h"
 #include "local.h"
+#if !defined(WIN32) && !defined(__CYGWIN__) && defined(LIBLOG_ENABLE_SYSLOG)
+#include <syslog.h>
+#endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define SYSTEM_SYSLOG_INABLE

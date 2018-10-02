@@ -13,6 +13,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(LOGGING_SOURCE
 	log.c
+	error.c
 	initfini.c
 )
 
@@ -21,6 +22,9 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--undefined=__li
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--undefined=__liblog_init")
 
 option (LIBLOG_ENABLE_SYSLOG "Log to syslog" OFF)
+option (LIBLOG_ASSURE_LOGGED "Error functions uses liblog for pritouts" ON)
+option (LIBLOG_ASSURE_LOGGED "Error functions uses liblog for pritouts" ON)
+option (LIBLOG_ASSURE_INCL_FILEINFO "File-name/line-number appended" OFF)
 
 set(LIBLOG_DEFAULT_LOG_LEVEL
 	${LIBLOG_DEFAULT_LOG_LEVEL}
