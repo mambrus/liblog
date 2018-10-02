@@ -28,7 +28,6 @@
 #include <stdlib.h>
 
 #include <liblog/log.h>
-#include "config.h"
 
 extern log_level log_ASSURE;
 extern log_level log_ASSERT;
