@@ -27,11 +27,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <log.h>
-#include "config.h"
+#include <liblog/log.h>
 
 extern log_level log_ASSURE;
 extern log_level log_ASSERT;
+
+typedef enum { _ASSERT, _ASSURE } assrt_t;
+
+void liblog_print_failure(assrt_t etype, char *sassure,
+                          const char *sfun, char *sfile, int iline);
 
 static inline log_level get_loglevel_assert(void)
 {
@@ -53,91 +57,10 @@ static inline void set_loglevel_assure(log_level newlevel)
     log_ASSURE = newlevel;
 }
 
-#ifdef ENABLE_LOGGING
-
-#define LOGX( WHY, ...)  {              \
-    log_level log_tmp;                  \
-    switch (WHY) {                      \
-        case _ASSERT:                   \
-            log_tmp = log_ASSERT;       \
-            break;                      \
-        case _ASSURE:                   \
-            log_tmp = log_ASSURE;       \
-            break;                      \
-        default:                        \
-            log_tmp = log_ASSURE;       \
-    }                                   \
-                                        \
-    switch (log_tmp) {                  \
-        case LOG_LEVEL_VERBOSE:         \
-            LOGV(__VA_ARGS__);          \
-            break;                      \
-        case LOG_LEVEL_DEBUG:           \
-            LOGD(__VA_ARGS__);          \
-            break;                      \
-        case LOG_LEVEL_INFO:            \
-            LOGI(__VA_ARGS__);          \
-            break;                      \
-        case LOG_LEVEL_WARNING:         \
-            LOGW(__VA_ARGS__);          \
-            break;                      \
-        case LOG_LEVEL_ERROR:           \
-            LOGE(__VA_ARGS__);          \
-            break;                      \
-        default:                        \
-            LOGE(__VA_ARGS__);          \
-            break;                      \
-    }                                   \
-}
-
-#endif
-typedef enum { _ASSERT, _ASSURE } assrt_t;
-
-static inline void notify_failure(assrt_t etype, char *sassure,
-                                  const char *sfun, char *sfile, int iline)
-{
-#ifdef ENABLE_LOGGING
-    char *why;
-
-    switch (etype) {
-        case _ASSERT:
-            why = "ASSERT: ";
-            break;
-        case _ASSURE:
-            why = "ASSURE: ";
-            break;
-        default:
-            why = "UNKNOWN: ";
-    };
-
-#  ifdef LOG_INCLUDE_FILE_INFO
-    if (sfun != NULL) {
-        LOGX(etype, "%s %s failed in [%s]\n", why, sassure, sfun);
-    } else {
-        LOGX(etype, "%s %s failed\n", why, sassure);
-    }
-#  else
-    if (sfun != NULL) {
-        LOGX(etype, "%s %s failed in [%s] @ [%s:%d]\n", why, sassure, sfun,
-             sfile, iline);
-    } else {
-        LOGX(etype, "%s %s failed @ [%s:%d]\n", why, sassure, sfile, iline);
-    }
-#  endif
-#else
-    if (sfun != NULL)
-        fprintf(stderr, "ERROR: %s failed in [%s] @ [%s:%d]\n", sassure,
-                sfun, sfile, iline);
-    else
-        fprintf(stderr, "ERROR: %s failed @ [%s:%d]\n", sassure, sfile, iline);
-    fflush(stderr);
-#endif
-}
-
 static inline void notify_andfail(assrt_t etype, char *sassure,
                                   const char *sfun, char *sfile, int iline)
 {
-    notify_failure(etype, sassure, sfun, sfile, iline);
+    liblog_print_failure(etype, sassure, sfun, sfile, iline);
 
 #ifndef NDEBUG
     /* Generate coredump */
@@ -161,7 +84,7 @@ static inline void notify_andfail(assrt_t etype, char *sassure,
 static inline void assertfail(char *assertstr,
                               char *filestr, const char *sfun, int line)
 {
-    notify_failure(_ASSERT, assertstr, sfun, filestr, line);
+    liblog_print_failure(_ASSERT, assertstr, sfun, filestr, line);
 
 #ifndef NDEBUG
     /* Generate coredump */
@@ -232,12 +155,12 @@ static inline void assertfail(char *assertstr,
 #ifndef __GNUC__
 # define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
     _ASSURE, #p, FNC, FLE, __LINE__ ) )
-# define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
+# define ASSURE_E(p,e) if (!(p)) {(void) liblog_print_failure( \
    _ASSURE, #p, FNC, FLE, __LINE__ ); e;}
 #else
 # define ASSURE(p) ((p) ? (void)0 : (void) notify_andfail( \
     _ASSURE, #p, __FUNCTION__, FLE, __LINE__ ) )
-# define ASSURE_E(p,e) if (!(p)) {(void) notify_failure( \
+# define ASSURE_E(p,e) if (!(p)) {(void) liblog_print_failure( \
     _ASSURE, #p, __FUNCTION__, FLE, __LINE__ ); e;}
 #endif
 
@@ -287,7 +210,7 @@ accepts returning with code, and that the code means error */
     {                                                      \
         int rc = (p);                                      \
                                                            \
-        rc ? (void)0 : (void) notify_failure(              \
+        rc ? (void)0 : (void) liblog_print_failure(        \
             #p, __FUNCTION__, FLE, __LINE__ );             \
         return rc;                                         \
     }                                                      \

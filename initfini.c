@@ -21,15 +21,31 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include <config.h>
 #include <syslog.h>
-#include "log.h"
+#include <liblog/log.h>
+#include "config.h"
+#include "local.h"
 #define __init __attribute__((constructor))
 #define __fini __attribute__((destructor))
 
-/* Module initializers/deinitializers. When used as library (who don't have
+#ifndef PROJ_NAME
+#define PROJ_NAME LIBLOG_PROJ_NAME
+#endif
+
+#ifndef VERSION
+#define VERSION LIBLOG_VERSION
+#endif
+
+/*
+ * If liblog is built and used as dynamic library, this is undefined,
+ * therefore we set it to something recognizable */
+#ifndef LOG_AS_PROCESS_NAME_DFLT
+#define LOG_AS_PROCESS_NAME_DFLT "DYNAMIC-LIBRARY"
+#endif
+
+/* Module initializers/de-initializers. When used as library (who don't have
  * a natural entry/exit function) these are used to initialize
- * deinitialize. Use to set predefined/default states and cleanup.
+ * de-initialize. Use to set predefined/default states and cleanup.
  *
  * This will work with shared libraries as well as with static as they get
  * invoked by RTL load/unload, with or without C++ code (i.e. functions will
@@ -48,10 +64,15 @@ void __init __liblog_init(void)
     log_level = log_getenv_loglevel();
 
     /* Open syslog, include stderr in output */
-    log_syslog_config(1);
+#ifdef LIBLOG_ENABLE_SYSLOG
+    log_syslog_config(ENABLE_SYSLOG_STDERR);
+#endif
 
     log_set_verbosity(log_level);
-    log_debug("%s %s: initializing\n", PROJ_NAME, VERSION);
+#ifdef ENABLE_INITFINI_SHOWEXEC
+    log_debug("%s [%s]: initializing for: %s\n", PROJ_NAME, VERSION,
+              LOG_AS_PROCESS_NAME_DFLT);
+#endif
 }
 
 void __fini __liblog_fini(void)
@@ -59,7 +80,10 @@ void __fini __liblog_fini(void)
     int log_level = log_getenv_loglevel();
 
     log_set_verbosity(log_level);
-    log_debug("% %s: deinitializing\n", PROJ_NAME, VERSION);
+#ifdef ENABLE_INITFINI_SHOWEXEC
+    log_debug("% [%s]: de-initializing for: %s\n", PROJ_NAME, VERSION,
+              LOG_AS_PROCESS_NAME_DFLT);
     fflush(NULL);
+#endif
     closelog();
 }
