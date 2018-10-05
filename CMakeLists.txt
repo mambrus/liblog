@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 2.6)
-
 project (liblog C)
 
 set (LIBLOG_VERSION_MAJOR 0)
@@ -76,3 +75,21 @@ install(TARGETS log log_static
         LIBRARY       DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         ARCHIVE       DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME})
+
+# Install package generation
+# --------------------------
+
+# Minimum pre-requisites for various cpack generators
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Ambrus")
+
+set(SPECIFIED_CPACK
+	${SPECIFIED_CPACK}
+	CACHE STRING
+	"Specify cpack generator: [NSIS|ZIP|DEB|TGZ|RPM]")
+
+if (NOT SPECIFIED_CPACK STREQUAL "")
+	SET(CPACK_GENERATOR ${SPECIFIED_CPACK})
+endif ()
+
+INCLUDE(CPack)
+
