@@ -3,7 +3,7 @@ project (liblog C)
 
 set (LIBLOG_VERSION_MAJOR 0)
 set (LIBLOG_VERSION_MINOR 3)
-set (LIBLOG_VERSION_PATCH 1)
+set (LIBLOG_VERSION_PATCH 2)
 
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -78,9 +78,17 @@ install(TARGETS log log_static
 
 # Install package generation
 # --------------------------
-
-# Minimum pre-requisites for various cpack generators
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Ambrus")
+SET(CPACK_PACKAGE_CONTACT "Michael Ambrus")
+SET(CPACK_PACKAGE_VERSION_MAJOR ${LIBLOG_VERSION_MAJOR})
+SET(CPACK_PACKAGE_VERSION_MINOR ${LIBLOG_VERSION_MINOR})
+SET(CPACK_PACKAGE_VERSION_PATCH ${LIBLOG_VERSION_PATCH})
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+	"LIBLOG: Generalized multiplatform log/assert-library"
+	"API transparent with Android android/log.h"
+	"LICENSE: The MIT License (MIT)"
+	"Copyright (c) 2015 Michael Ambrus")
+SET(CPACK_RESOURCE_FILE_LICENSE
+	${PROJECT_SOURCE_DIR}/LICENSE)
 
 set(SPECIFIED_CPACK
 	${SPECIFIED_CPACK}
